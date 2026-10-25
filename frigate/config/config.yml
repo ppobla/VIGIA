@@ -99,12 +99,13 @@ go2rtc:
     casa_a_ipcam01_sub:
       - rtsp://{FRIGATE_CASA_A_IPCAM01_USER}:{FRIGATE_CASA_A_IPCAM01_PASS}@{FRIGATE_CASA_A_IPCAM01_IP}:554/Streaming/Channels/102
 
-    # ---------- CASA B (via Tailscale) ----------
-    # Só o stream secundário, para não gastar o upload da internet da Casa B.
-    casa_b_cam01_sub:
-      - rtsp://{FRIGATE_CASA_B_DVR_USER}:{FRIGATE_CASA_B_DVR_PASS}@{FRIGATE_CASA_B_DVR_IP}:554/cam/realmonitor?channel=1&subtype=1
-    casa_b_cam02_sub:
-      - rtsp://{FRIGATE_CASA_B_DVR_USER}:{FRIGATE_CASA_B_DVR_PASS}@{FRIGATE_CASA_B_DVR_IP}:554/cam/realmonitor?channel=2&subtype=1
+    # ---------- CASA B (via Tailscale) — desativada por enquanto ----------
+    # Para ativar: remova o '#' do início das linhas abaixo e das câmeras casa_b no fim do arquivo.
+#    # Só o stream secundário, para não gastar o upload da internet da Casa B.
+#    casa_b_cam01_sub:
+#      - rtsp://{FRIGATE_CASA_B_DVR_USER}:{FRIGATE_CASA_B_DVR_PASS}@{FRIGATE_CASA_B_DVR_IP}:554/cam/realmonitor?channel=1&subtype=1
+#    casa_b_cam02_sub:
+#      - rtsp://{FRIGATE_CASA_B_DVR_USER}:{FRIGATE_CASA_B_DVR_PASS}@{FRIGATE_CASA_B_DVR_IP}:554/cam/realmonitor?channel=2&subtype=1
 
 cameras:
   # Casa A: detecta no stream secundário (leve) e grava o principal (boa qualidade).
@@ -138,17 +139,17 @@ cameras:
           input_args: preset-rtsp-restream
           roles: [detect]
 
-  # Casa B: o mesmo stream secundário serve para detectar e gravar.
-  casa_b_cam01:
-    ffmpeg:
-      inputs:
-        - path: rtsp://127.0.0.1:8554/casa_b_cam01_sub
-          input_args: preset-rtsp-restream
-          roles: [detect, record]
+  # Casa B — desativada por enquanto (remova o '#' para ativar).
+#  casa_b_cam01:
+#    ffmpeg:
+#      inputs:
+#        - path: rtsp://127.0.0.1:8554/casa_b_cam01_sub
+#          input_args: preset-rtsp-restream
+#          roles: [detect, record]
 
-  casa_b_cam02:
-    ffmpeg:
-      inputs:
-        - path: rtsp://127.0.0.1:8554/casa_b_cam02_sub
-          input_args: preset-rtsp-restream
-          roles: [detect, record]
+#  casa_b_cam02:
+#    ffmpeg:
+#      inputs:
+#        - path: rtsp://127.0.0.1:8554/casa_b_cam02_sub
+#          input_args: preset-rtsp-restream
+#          roles: [detect, record]

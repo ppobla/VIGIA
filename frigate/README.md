@@ -30,9 +30,16 @@ equipamentos, sem mensalidade e sem enviar imagens para a nuvem.
 - **DVRs: continuam gravando 24h.** O Frigate guarda só os eventos com IA, o que cabe no SSD
   de 120 GB.
 
+> **Começando por uma casa:** o i5 e o T4 estão na mesma casa (Casa A), e a configuração já vem
+> com a Casa B desativada. Nesta fase, pule o Passo 5. O T4 (Ubuntu) só entra quando a segunda
+> casa for adicionada.
+
 ## Passo 1: preparar o PC i5 (Casa A)
 
-1. Instale o **Debian 13** ou o **Ubuntu Server 24.04** (sem interface gráfica fica mais leve).
+1. Instale o **Ubuntu Server 24.04 LTS** no lugar do Windows (é o mesmo sistema do T4). O
+   Frigate não tem suporte oficial no Windows, e no WSL a GPU do i5 não chega até ele.
+   **Copie antes qualquer arquivo do Windows que queira guardar**: a instalação apaga o disco.
+   Na instalação, marque **Install OpenSSH server** para acessar o i5 pelo T4 ou por outro PC.
 2. Instale o Docker e o Tailscale:
 
    ```bash
