@@ -40,6 +40,14 @@ equipamentos, sem mensalidade e sem enviar imagens para a nuvem.
    Frigate não tem suporte oficial no Windows, e no WSL a GPU do i5 não chega até ele.
    **Copie antes qualquer arquivo do Windows que queira guardar**: a instalação apaga o disco.
    Na instalação, marque **Install OpenSSH server** para acessar o i5 pelo T4 ou por outro PC.
+
+   **Para manter o Windows**, instale o Ubuntu num SSD separado:
+   - Desligue o PC e desconecte o cabo SATA do SSD do Windows. Assim o instalador não mexe nele.
+   - Instale o Ubuntu no SSD novo e depois reconecte o SSD do Windows.
+   - Na BIOS, coloque o SSD do Ubuntu em primeiro na ordem de boot. Para usar o Windows, escolha
+     o disco no menu de boot (geralmente F8, F11 ou F12).
+   - Também na BIOS, ative **Restore on AC Power Loss = Power On**. Assim o PC religa sozinho
+     depois de uma queda de energia e o Frigate volta a funcionar sem você estar lá.
 2. Instale o Docker e o Tailscale:
 
    ```bash
