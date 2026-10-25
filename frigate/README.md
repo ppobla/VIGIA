@@ -66,26 +66,56 @@ equipamentos, sem mensalidade e sem enviar imagens para a nuvem.
 
 ## Passo 2: descobrir os endereços das câmeras
 
-No DVR (menu **Rede**), confira se o **RTSP** está ativo (porta 554). Em cada canal, configure
-o **stream secundário (extra)** em **H.264**, cerca de **640x360 ou 704x480** e **5 a 10 fps**.
-É ele que a IA analisa.
+**Equipamentos da Casa A (já configurados no `config.yml` e no `.env.example`):**
 
-| Marca | Principal | Secundário |
-|---|---|---|
-| Intelbras / Dahua (DVR ou câmera) | `/cam/realmonitor?channel=1&subtype=0` | `/cam/realmonitor?channel=1&subtype=1` |
-| Hikvision (DVR ou câmera) | `/Streaming/Channels/101` | `/Streaming/Channels/102` |
-| Outras marcas | procure "RTSP" no manual ou use o app **ONVIF Device Manager** | |
+| Aparelho | IP | Firmware | Endereço no Frigate |
+|---|---|---|---|
+| DVR Giga (Multi) | `192.168.1.10` | Xiongmai (a confirmar com o script abaixo) | `dvrip://…:34567?channel=0&subtype=0` |
+| Câmera IP iCSee (X6E-WEQ) | `192.168.1.3` | Xiongmai | `dvrip://…:34567?channel=0&subtype=0` |
 
-No DVR, `channel=N` (Intelbras/Dahua) ou `N01`/`N02` (Hikvision) é o número do canal.
-
-Teste cada endereço antes de colocar no Frigate:
+Rode o script de descoberta em cada IP. Ele mostra as portas abertas, o fabricante provável e,
+com usuário e senha, testa os endereços RTSP:
 
 ```bash
 sudo apt install -y ffmpeg
+bash scripts/descobrir-camera.sh 192.168.1.10 admin SENHA-DO-DVR
+bash scripts/descobrir-camera.sh 192.168.1.3  admin SENHA-DO-ICSEE
+```
+
+Se o DVR **não** mostrar a porta 34567, ele não é Xiongmai: use o endereço que o script sugerir
+no lugar do `dvrip://` dos canais `casa_a_cam01` e `casa_a_cam02`.
+
+**Antes de continuar, no roteador e nos aparelhos:**
+
+- **IP fixo:** reserve `192.168.1.10` e `192.168.1.3` no DHCP do roteador (procure "Reserva de
+  endereço" ou "DHCP estático"). Se o IP mudar, a câmera some do Frigate.
+- **Senha da iCSee:** o usuário é `admin` e a senha é a criada no app iCSee. Câmera sem senha
+  fica aberta para qualquer um da rede: crie uma no app.
+- **H.264:** no app iCSee (configurações da câmera > codificação) e no menu do DVR, troque
+  H.265/H.265+ por **H.264** no stream principal e no secundário. A GPU do i5 não decodifica
+  H.265.
+- **Secundário leve:** cerca de **640x360 ou 704x480** e **5 a 10 fps**. É ele que a IA analisa.
+- **Mais canais no DVR:** copie os blocos `casa_a_cam02` aumentando o `channel` (canal 3 =
+  `channel=2`). No `dvrip://` o canal começa em **0**; no RTSP começa em **1**.
+
+**Outras marcas (Casa B ou câmeras futuras):**
+
+| Marca | Principal | Secundário |
+|---|---|---|
+| Xiongmai (iCSee, XMEye, Giga, Multi) | `dvrip://usuario:senha@IP:34567?channel=0&subtype=0` | `…&subtype=1` |
+| Xiongmai via RTSP | `rtsp://IP:554/user=admin&password=SENHA&channel=1&stream=0.sdp?real_stream` | `…&stream=1.sdp?real_stream` |
+| Intelbras / Dahua (DVR ou câmera) | `rtsp://…:554/cam/realmonitor?channel=1&subtype=0` | `…&subtype=1` |
+| Hikvision (DVR ou câmera) | `rtsp://…:554/Streaming/Channels/101` | `…/102` |
+| Outras marcas | procure "RTSP" no manual ou use o app **ONVIF Device Manager** | |
+
+Endereços `rtsp://` podem ser testados sozinhos antes de ir para o Frigate (o `dvrip://` só é
+testado com o Frigate rodando, em **Configurações > Câmeras** ou nos logs):
+
+```bash
 bash scripts/testar-camera.sh "rtsp://admin:SENHA@192.168.1.100:554/cam/realmonitor?channel=1&subtype=1"
 ```
 
-> Evite os caracteres `@ : / # ? &` na senha das câmeras: eles quebram o endereço RTSP.
+> Evite os caracteres `@ : / # ? &` na senha das câmeras: eles quebram o endereço.
 
 ## Passo 3: preencher a configuração
 
@@ -95,7 +125,8 @@ nano .env                 # IPs, usuários e senhas dos DVRs e câmeras
 nano config/config.yml    # uma entrada por câmera
 ```
 
-O `config/config.yml` já vem com 5 câmeras de exemplo (3 na Casa A e 2 na Casa B). Para cada
+O `config/config.yml` já vem com 3 câmeras na Casa A (2 canais do DVR Giga e a câmera iCSee) e
+2 de exemplo na Casa B, desativadas. Para cada
 câmera nova:
 
 1. Em `go2rtc.streams`, crie `nome` (principal) e `nome_sub` (secundário).
@@ -169,6 +200,7 @@ tempo de inferência. Para guardar mais dias, coloque um HD de 1 TB e aponte o v
 
 | Sintoma | O que fazer |
 |---|---|
+| Câmera iCSee/Giga não conecta pelo `dvrip://` | Confira usuário e senha; se continuar, troque pelo endereço `rtsp://` Xiongmai que está comentado no `config.yml` |
 | Câmera com tela verde ou erro de ffmpeg | Confira o endereço com `testar-camera.sh`. Se o stream for H.265, mude para H.264 no DVR |
 | Erro no detector OpenVINO no log | No `config.yml`, troque o detector por `cpu1: { type: cpu }` (mais lento, mas funciona) |
 | "Bus error" no log | Aumente `shm_size` no `docker-compose.yml` (ex.: `"1gb"`) |

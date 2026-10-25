@@ -84,24 +84,29 @@ review:
 go2rtc:
   streams:
     # ---------- CASA A (rede local do servidor) ----------
-    # DVR Intelbras/Dahua: channel=N é o número do canal; subtype=0 principal, 1 secundário.
+    # DVR Giga (Multi) e câmera iCSee usam firmware Xiongmai: o go2rtc fala direto o protocolo
+    # deles (dvrip, porta 34567), sem depender do RTSP. channel começa em 0 (canal 1 = channel=0);
+    # subtype=0 principal, subtype=1 secundário.
+    # Se o dvrip não funcionar, troque pelo RTSP (canal começa em 1; stream=0 principal, 1 secundário):
+    #   rtsp://{FRIGATE_CASA_A_DVR_IP}:554/user={FRIGATE_CASA_A_DVR_USER}&password={FRIGATE_CASA_A_DVR_PASS}&channel=1&stream=0.sdp?real_stream
     casa_a_cam01:
-      - rtsp://{FRIGATE_CASA_A_DVR_USER}:{FRIGATE_CASA_A_DVR_PASS}@{FRIGATE_CASA_A_DVR_IP}:554/cam/realmonitor?channel=1&subtype=0
+      - dvrip://{FRIGATE_CASA_A_DVR_USER}:{FRIGATE_CASA_A_DVR_PASS}@{FRIGATE_CASA_A_DVR_IP}:34567?channel=0&subtype=0
     casa_a_cam01_sub:
-      - rtsp://{FRIGATE_CASA_A_DVR_USER}:{FRIGATE_CASA_A_DVR_PASS}@{FRIGATE_CASA_A_DVR_IP}:554/cam/realmonitor?channel=1&subtype=1
+      - dvrip://{FRIGATE_CASA_A_DVR_USER}:{FRIGATE_CASA_A_DVR_PASS}@{FRIGATE_CASA_A_DVR_IP}:34567?channel=0&subtype=1
     casa_a_cam02:
-      - rtsp://{FRIGATE_CASA_A_DVR_USER}:{FRIGATE_CASA_A_DVR_PASS}@{FRIGATE_CASA_A_DVR_IP}:554/cam/realmonitor?channel=2&subtype=0
+      - dvrip://{FRIGATE_CASA_A_DVR_USER}:{FRIGATE_CASA_A_DVR_PASS}@{FRIGATE_CASA_A_DVR_IP}:34567?channel=1&subtype=0
     casa_a_cam02_sub:
-      - rtsp://{FRIGATE_CASA_A_DVR_USER}:{FRIGATE_CASA_A_DVR_PASS}@{FRIGATE_CASA_A_DVR_IP}:554/cam/realmonitor?channel=2&subtype=1
-    # Câmera IP Hikvision: 101 = canal 1 principal, 102 = canal 1 secundário.
+      - dvrip://{FRIGATE_CASA_A_DVR_USER}:{FRIGATE_CASA_A_DVR_PASS}@{FRIGATE_CASA_A_DVR_IP}:34567?channel=1&subtype=1
+    # Câmera IP iCSee (ligada direto no roteador, não no DVR).
     casa_a_ipcam01:
-      - rtsp://{FRIGATE_CASA_A_IPCAM01_USER}:{FRIGATE_CASA_A_IPCAM01_PASS}@{FRIGATE_CASA_A_IPCAM01_IP}:554/Streaming/Channels/101
+      - dvrip://{FRIGATE_CASA_A_IPCAM01_USER}:{FRIGATE_CASA_A_IPCAM01_PASS}@{FRIGATE_CASA_A_IPCAM01_IP}:34567?channel=0&subtype=0
     casa_a_ipcam01_sub:
-      - rtsp://{FRIGATE_CASA_A_IPCAM01_USER}:{FRIGATE_CASA_A_IPCAM01_PASS}@{FRIGATE_CASA_A_IPCAM01_IP}:554/Streaming/Channels/102
+      - dvrip://{FRIGATE_CASA_A_IPCAM01_USER}:{FRIGATE_CASA_A_IPCAM01_PASS}@{FRIGATE_CASA_A_IPCAM01_IP}:34567?channel=0&subtype=1
 
     # ---------- CASA B (via Tailscale) — desativada por enquanto ----------
     # Para ativar: remova o '#' do início das linhas abaixo e das câmeras casa_b no fim do arquivo.
 #    # Só o stream secundário, para não gastar o upload da internet da Casa B.
+#    # (Exemplo Intelbras/Dahua; se o DVR da Casa B for Xiongmai, use o formato dvrip:// da Casa A.)
 #    casa_b_cam01_sub:
 #      - rtsp://{FRIGATE_CASA_B_DVR_USER}:{FRIGATE_CASA_B_DVR_PASS}@{FRIGATE_CASA_B_DVR_IP}:554/cam/realmonitor?channel=1&subtype=1
 #    casa_b_cam02_sub:
