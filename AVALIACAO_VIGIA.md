@@ -1,5 +1,10 @@
 # Avaliação do `supervision` para o VIGIA
 
+> **Decisão (2026-10-25):** a base do VIGIA passa a ser o **Frigate** (NVR com IA), que cobre
+> as lacunas do supervision: conexão com DVRs/câmeras, gravação, painel e alertas. O kit de
+> instalação está em [`frigate/`](frigate/README.md). O supervision fica como opção para análises
+> personalizadas no futuro.
+
 Este repositório contém uma cópia integral do [roboflow/supervision](https://github.com/roboflow/supervision)
 (licença MIT, © 2022 Roboflow — ver `LICENSE.md`), importada em 2026-10-24.
 

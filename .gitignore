@@ -189,3 +189,10 @@ tasks/
 output/
 notebooks/
 releases/
+
+# VIGIA / Frigate: segredos e dados locais
+frigate/.env
+frigate/storage/
+frigate/config/*.db*
+frigate/config/model_cache/
+frigate/config/backup*

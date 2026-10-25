@@ -1,0 +1,26 @@
+# VIGIA — Frigate no PC i5 4ª geração (Casa A)
+# Subir:     docker compose up -d
+# Ver logs:  docker compose logs -f frigate
+# Painel:    https://IP-DO-PC:8971  (a senha do usuário admin aparece no log na 1ª vez)
+services:
+  frigate:
+    container_name: frigate
+    image: ghcr.io/blakeblackshear/frigate:0.18.2
+    restart: unless-stopped
+    stop_grace_period: 30s
+    shm_size: "512mb" # suficiente para ~12 câmeras detectando em resolução de stream secundário
+    devices:
+      - /dev/dri/renderD128:/dev/dri/renderD128 # GPU integrada Intel (decodificação de vídeo)
+    env_file: .env
+    environment:
+      LIBVA_DRIVER_NAME: i965 # driver de vídeo para Intel 1ª a 5ª geração
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - ./config:/config
+      - ./storage:/media/frigate
+      - type: tmpfs # cache de gravação em memória (1 GB)
+        target: /tmp/cache
+        tmpfs:
+          size: 1000000000
+    ports:
+      - "8971:8971" # painel com login. NUNCA abra esta porta no roteador; use o Tailscale.

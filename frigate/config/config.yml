@@ -1,0 +1,154 @@
+# VIGIA — configuração do Frigate 0.18.2
+# Servidor: PC i5 4ª geração (16 GB RAM) na Casa A.
+# Câmeras da Casa B chegam pela VPN Tailscale (ponte no mini PC T4).
+#
+# Senhas e IPs NÃO ficam aqui: vêm do arquivo .env (variáveis FRIGATE_*).
+# Para adicionar uma câmera: copie um bloco em go2rtc.streams e outro em cameras,
+# trocando o nome (sem espaços nem acentos) e o canal/endereço.
+# Documentação: https://docs.frigate.video/configuration/reference
+
+mqtt:
+  enabled: false # sem Home Assistant por enquanto
+
+# Decodificação de vídeo pela GPU integrada do i5 (Haswell usa o driver i965,
+# definido em LIBVA_DRIVER_NAME no docker-compose.yml).
+ffmpeg:
+  hwaccel_args: preset-vaapi
+
+# Detecção de objetos com OpenVINO rodando na CPU (o i5 tem AVX2).
+# Se o log mostrar erro no detector, troque por:  cpu1: { type: cpu }
+detectors:
+  ov:
+    type: openvino
+    device: CPU
+
+model:
+  width: 300
+  height: 300
+  input_tensor: nhwc
+  input_pixel_format: bgr
+  path: /openvino-model/ssdlite_mobilenet_v2.xml
+  labelmap_path: /openvino-model/coco_91cl_bkgr.txt
+
+objects:
+  track:
+    - person
+    - car
+    - motorcycle
+    - bicycle
+    - dog
+    - cat
+
+detect:
+  enabled: true
+  fps: 5
+
+# O DVR continua gravando 24h no HD dele. O Frigate guarda só os eventos com IA,
+# o que cabe no SSD de 120 GB. Quando o disco enche, o Frigate apaga as gravações
+# mais antigas sozinho.
+record:
+  enabled: true
+  continuous:
+    days: 0
+  motion:
+    days: 0
+  alerts:
+    retain:
+      days: 7
+      mode: motion
+  detections:
+    retain:
+      days: 3
+      mode: motion
+
+snapshots:
+  enabled: true
+  retain:
+    default: 14
+
+# "Alertas" = o que merece notificação. "Detecções" = o resto (cachorro, gato...).
+review:
+  alerts:
+    labels:
+      - person
+      - car
+      - motorcycle
+
+# Notificações no celular (precisa de HTTPS: use o "tailscale serve" do guia).
+# Descomente e coloque seu e-mail depois que o acesso remoto estiver funcionando.
+# notifications:
+#   enabled: true
+#   email: "seu-email@exemplo.com"
+#   cooldown: 30
+
+go2rtc:
+  streams:
+    # ---------- CASA A (rede local do servidor) ----------
+    # DVR Intelbras/Dahua: channel=N é o número do canal; subtype=0 principal, 1 secundário.
+    casa_a_cam01:
+      - rtsp://{FRIGATE_CASA_A_DVR_USER}:{FRIGATE_CASA_A_DVR_PASS}@{FRIGATE_CASA_A_DVR_IP}:554/cam/realmonitor?channel=1&subtype=0
+    casa_a_cam01_sub:
+      - rtsp://{FRIGATE_CASA_A_DVR_USER}:{FRIGATE_CASA_A_DVR_PASS}@{FRIGATE_CASA_A_DVR_IP}:554/cam/realmonitor?channel=1&subtype=1
+    casa_a_cam02:
+      - rtsp://{FRIGATE_CASA_A_DVR_USER}:{FRIGATE_CASA_A_DVR_PASS}@{FRIGATE_CASA_A_DVR_IP}:554/cam/realmonitor?channel=2&subtype=0
+    casa_a_cam02_sub:
+      - rtsp://{FRIGATE_CASA_A_DVR_USER}:{FRIGATE_CASA_A_DVR_PASS}@{FRIGATE_CASA_A_DVR_IP}:554/cam/realmonitor?channel=2&subtype=1
+    # Câmera IP Hikvision: 101 = canal 1 principal, 102 = canal 1 secundário.
+    casa_a_ipcam01:
+      - rtsp://{FRIGATE_CASA_A_IPCAM01_USER}:{FRIGATE_CASA_A_IPCAM01_PASS}@{FRIGATE_CASA_A_IPCAM01_IP}:554/Streaming/Channels/101
+    casa_a_ipcam01_sub:
+      - rtsp://{FRIGATE_CASA_A_IPCAM01_USER}:{FRIGATE_CASA_A_IPCAM01_PASS}@{FRIGATE_CASA_A_IPCAM01_IP}:554/Streaming/Channels/102
+
+    # ---------- CASA B (via Tailscale) ----------
+    # Só o stream secundário, para não gastar o upload da internet da Casa B.
+    casa_b_cam01_sub:
+      - rtsp://{FRIGATE_CASA_B_DVR_USER}:{FRIGATE_CASA_B_DVR_PASS}@{FRIGATE_CASA_B_DVR_IP}:554/cam/realmonitor?channel=1&subtype=1
+    casa_b_cam02_sub:
+      - rtsp://{FRIGATE_CASA_B_DVR_USER}:{FRIGATE_CASA_B_DVR_PASS}@{FRIGATE_CASA_B_DVR_IP}:554/cam/realmonitor?channel=2&subtype=1
+
+cameras:
+  # Casa A: detecta no stream secundário (leve) e grava o principal (boa qualidade).
+  casa_a_cam01:
+    ffmpeg:
+      inputs:
+        - path: rtsp://127.0.0.1:8554/casa_a_cam01
+          input_args: preset-rtsp-restream
+          roles: [record]
+        - path: rtsp://127.0.0.1:8554/casa_a_cam01_sub
+          input_args: preset-rtsp-restream
+          roles: [detect]
+
+  casa_a_cam02:
+    ffmpeg:
+      inputs:
+        - path: rtsp://127.0.0.1:8554/casa_a_cam02
+          input_args: preset-rtsp-restream
+          roles: [record]
+        - path: rtsp://127.0.0.1:8554/casa_a_cam02_sub
+          input_args: preset-rtsp-restream
+          roles: [detect]
+
+  casa_a_ipcam01:
+    ffmpeg:
+      inputs:
+        - path: rtsp://127.0.0.1:8554/casa_a_ipcam01
+          input_args: preset-rtsp-restream
+          roles: [record]
+        - path: rtsp://127.0.0.1:8554/casa_a_ipcam01_sub
+          input_args: preset-rtsp-restream
+          roles: [detect]
+
+  # Casa B: o mesmo stream secundário serve para detectar e gravar.
+  casa_b_cam01:
+    ffmpeg:
+      inputs:
+        - path: rtsp://127.0.0.1:8554/casa_b_cam01_sub
+          input_args: preset-rtsp-restream
+          roles: [detect, record]
+
+  casa_b_cam02:
+    ffmpeg:
+      inputs:
+        - path: rtsp://127.0.0.1:8554/casa_b_cam02_sub
+          input_args: preset-rtsp-restream
+          roles: [detect, record]
