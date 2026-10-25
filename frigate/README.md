@@ -70,16 +70,16 @@ equipamentos, sem mensalidade e sem enviar imagens para a nuvem.
 
 | Aparelho | IP | Firmware | Endereço no Frigate |
 |---|---|---|---|
-| DVR Giga (Multi) | `192.168.1.10` | Xiongmai (a confirmar com o script abaixo) | `dvrip://…:34567?channel=0&subtype=0` |
-| Câmera IP iCSee (X6E-WEQ) | `192.168.1.3` | Xiongmai | `dvrip://…:34567?channel=0&subtype=0` |
+| DVR Giga (Multi) | `192.168.1.3` | Xiongmai (a confirmar com o script abaixo) | `dvrip://…:34567?channel=0&subtype=0` |
+| Câmera IP iCSee (X6E-WEQ) | `192.168.1.10` | Xiongmai | `dvrip://…:34567?channel=0&subtype=0` |
 
 Rode o script de descoberta em cada IP. Ele mostra as portas abertas, o fabricante provável e,
 com usuário e senha, testa os endereços RTSP:
 
 ```bash
 sudo apt install -y ffmpeg
-bash scripts/descobrir-camera.sh 192.168.1.10 admin SENHA-DO-DVR
-bash scripts/descobrir-camera.sh 192.168.1.3  admin SENHA-DO-ICSEE
+bash scripts/descobrir-camera.sh 192.168.1.3  admin SENHA-DO-DVR
+bash scripts/descobrir-camera.sh 192.168.1.10 admin SENHA-DO-ICSEE
 ```
 
 Se o DVR **não** mostrar a porta 34567, ele não é Xiongmai: use o endereço que o script sugerir
@@ -87,7 +87,7 @@ no lugar do `dvrip://` dos canais `casa_a_cam01` e `casa_a_cam02`.
 
 **Antes de continuar, no roteador e nos aparelhos:**
 
-- **IP fixo:** reserve `192.168.1.10` e `192.168.1.3` no DHCP do roteador (procure "Reserva de
+- **IP fixo:** reserve `192.168.1.3` (DVR) e `192.168.1.10` (iCSee) no DHCP do roteador (procure "Reserva de
   endereço" ou "DHCP estático"). Se o IP mudar, a câmera some do Frigate.
 - **Senha da iCSee:** o usuário é `admin` e a senha é a criada no app iCSee. Câmera sem senha
   fica aberta para qualquer um da rede: crie uma no app.
